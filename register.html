@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script> 
+    <style>
+        #register > a {
+            color: rgba(0,0,0,.9);
+        }
+    </style>
+</head>
+<body>
+    <div id="header"></div>
+    <div class="container mt-5 px-5">
+        <h1 class="px-5">Cadastro de pets</h1>
+        <div class="row px-5">
+            <div class="col-md-9">
+                <div class="form-group">
+                    <label class="control-label">Nome</label>
+                    <input type="text" name="name" id="name" class="form-control" required="" />
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label class="control-label">Idade</label>
+                    <input type="number" name="age" id="age" class="form-control" required="" />
+                </div>
+            </div>
+        </div>
+        <div class="row px-5">
+            <div class="col-md-12">
+                <div class="form-group">
+                    <label class="control-label">Usuário</label>
+                    <select name="user_id" id="user_id" class="form-control">
+                        <option value="" selected disabled>Selecione</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        <div class="row px-5">
+            <div class="col-md-8">
+                <div class="form-group">
+                    <label class="control-label">Cidade</label>
+                    <input type="text" name="city" id="city" class="form-control" required="" />
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="form-group">
+                    <label class="control-label">Estado</label>
+                    <input type="text" name="state" id="state" maxlength="2" class="form-control" required="" />
+                </div>
+            </div>
+        </div>
+        <div class="row px-5">
+            <div class="col-md-12">
+                <div class="form-group">
+                    <label class="control-label">Informações</label>
+                    <textarea name="informations" id="informations" class="form-control" rows="3" style="resize: none;"></textarea>
+                </div>
+            </div>
+        </div>
+        <div class="row justify-content-center mt-5">
+            <div class="col-md-3">
+                <button type="button" id="btnSubmit" class="btn btn-primary btn-block">Salvar</button>
+            </div>
+        </div>
+    </div>
+    <script>
+        $(function(){
+            $("#header").load("header.html"); 
+
+            let xhr    = new XMLHttpRequest();
+            let url    = "http://127.0.0.1:8000/api/pets";
+            let method = "post";
+            
+            let request = () => {
+                return new Promise(() => {
+                    xhr.open("get", "http://127.0.0.1:8000/api/owners", true);
+                    xhr.setRequestHeader('Accept', 'application/json');
+                    xhr.setRequestHeader('Content-type', 'application/json');
+                    xhr.onload = (e) => {
+                        if (xhr.status === 200 && xhr.readyState === 4) {
+                            var data = JSON.parse(xhr.responseText);
+                            data.forEach(function(item) {
+                                addOption(item);
+                            })
+                        }
+                    }
+
+                    xhr.onerror = function (e) {
+                        alert("Erro ao localizar usuários");
+                    }
+                    xhr.send();
+                });
+            }
+
+            request().then(getPet(url));
+
+            function addOption(data) {
+                let select = $("#user_id");
+                select.append('<option value="' + data.id + '">' + data.name + '</option>');
+            }
+
+            function submitForm() {
+                xhr.open(method, url, true);
+                xhr.setRequestHeader('Accept', 'application/json');
+                xhr.setRequestHeader('Content-type', 'application/json');
+
+                let data = {
+                    name: $("#name").val(),
+                    age: $("#age").val(),
+                    city: $("#city").val(),
+                    state: $("#state").val(),
+                    informations: $("#informations").val(),
+                    user_id: $("#user_id").val(),
+                }
+
+                xhr.onload = function (e) {
+                    if (xhr.readyState === 4 && xhr.status === 201) {
+                        var dados = JSON.parse(xhr.responseText);
+                        alert("Pet inserido com sucesso");
+                        window.location.href = "index.html";
+                    } else if (xhr.readyState === 4 && xhr.status === 200) {
+                        var dados = JSON.parse(xhr.responseText);
+                        alert("Pet atualizado com sucesso");
+                        window.location.href = "index.html";
+                    }
+                }
+
+                xhr.send(JSON.stringify(data));
+            }
+
+            $("#btnSubmit").on( "click", submitForm);
+
+            function getPet() {
+                let parameter  = getSearchParams("id")
+
+                if (parameter) {
+                    url    = "http://127.0.0.1:8000/api/pets/" + parameter;
+                    method = "put";
+
+                    $.get(url, function (response) {
+                        formManager(response);
+                    });
+                }
+            }
+
+            function formManager(data) {
+                $('#name').val(data.name);
+                $('#age').val(data.age);
+                $('#user_id').val(data.pet_owners_id).prop('selected', true);
+                $('#city').val(data.city);
+                $('#state').val(data.state);
+                $('#informations').val(data.informations);
+            } 
+
+            function getSearchParams(key){
+                var params={};
+                window.location.search
+                    .replace(/[?&]+([^=&]+)=([^&]*)/gi, function(str,key,value) {
+                        params[key] = value;
+                    });
+                return key ? params[key] : params;    
+            }
+        });
+    </script>
+</body>
+</html>

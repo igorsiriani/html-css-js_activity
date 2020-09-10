@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script> 
+    <style>
+        #home > a {
+            color: rgba(0,0,0,.9);
+        }
+    </style>
+</head>
+<body>
+    <div id="header"></div>
+
+    <div class="container mt-5">
+        <h1 class="h1">Lista de pets</h1>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Idade</th>
+                    <th>Informações</th>
+                    <th>Cidade</th>
+                    <th>Estado</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody id="tablePet">
+
+            </tbody>
+        </table>
+        <nav aria-label="Page navigation example">
+            <ul id="paginator" class="pagination justify-content-center">
+            </ul>
+          </nav>
+    </div>
+
+    <script>
+        $(function(){
+            $("#header").load("header.html"); 
+        });
+
+        let page  = getSearchParams("page"); 
+
+        page = page > 0 ? page : 1;
+
+        $(document).ready(function () {
+            $.get('http://127.0.0.1:8000/api/pets?page=' + page, function (response) {
+                addPage(response.pagination.total_pages);
+                $.each(response.items, function (index, value) {
+                    addRow(value);
+                });
+            });
+        });
+
+        function addRow(data) {
+
+            $("#tablePet").append(`
+                <tr>
+                    <td>${data.name}</td>
+                    <td>${data.age}</td>
+                    <td>${data.informations}</td>
+                    <td>${data.city}</td>
+                    <td>${data.state}</td>
+                    <td>
+                        <a href="register.html?id=${data.id}" class="btn btn-primary">Editar</a>
+                        <a href="http://127.0.0.1:8000/api/pets/${data.id}" class="btn btn-danger">Excluir</a>
+                    </td>
+                </tr>
+            `);
+
+            $("#tablePet tr:last-child a.btn-danger").on('click', () => deletePet(event));
+            
+        }
+
+        function deletePet(event)
+        {
+            event.preventDefault();
+            let url = event.target.href;
+            let parentRow = event.target.parentNode.parentNode;
+            let xhr = new XMLHttpRequest();
+            xhr.open("delete", url, true);
+            xhr.onload = function () {
+                if(xhr.readyState === 4 && xhr.status === 200) {
+                    parentRow.remove();
+                    alert("Deletado com sucesso");
+                }
+            }
+
+            xhr.send();
+        }
+
+        function addPage(number) {
+            let paginatorContent = `<li class="page-item ${page == 1 ? 'disabled' : ''}">
+                                        <a class="page-link" href="index.html?page=${parseInt(page)-1}" tabindex="-1">Anterior</a>
+                                    </li>
+                                    `                  
+            for (let i = 1; i <= number; i++) {
+                paginatorContent += `<li class="page-item ${page == i ? 'active' : ''}">
+                                        <a class="page-link" href="index.html?page=${i}">${i}</a>
+                                    </li>
+                                    `
+            }
+            paginatorContent += `<li class="page-item ${number == page ? 'disabled' : ''}">
+                                    <a class="page-link" href="index.html?page=${parseInt(page)+1}">Próximo</a>
+                                </li>
+                                `
+            $("#paginator").html(paginatorContent);
+        }
+
+        function getSearchParams(key){
+            var params={};
+            window.location.search
+                .replace(/[?&]+([^=&]+)=([^&]*)/gi, function(str,key,value) {
+                    params[key] = value;
+                });
+            return key ? params[key] : params;    
+        }
+    </script>
+</body>
+</html>
